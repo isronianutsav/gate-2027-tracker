@@ -18,80 +18,11 @@ import {
 const CORRECT_PASSWORD = "gate2027"; // 👈 Change this to your password
 
 // ============================================================
-//  LOGIN HANDLERS
-// ============================================================
-window.handleLogin = function() {
-  const passwordInput = document.getElementById("passwordInput");
-  const errorEl = document.getElementById("loginError");
-  const password = passwordInput.value.trim();
-
-  if (password === CORRECT_PASSWORD) {
-    document.getElementById("loginPage").style.display = "none";
-    const mainApp = document.getElementById("mainApp");
-    mainApp.classList.remove("hidden");
-    setTimeout(() => {
-      mainApp.classList.add("visible");
-    }, 50);
-    errorEl.classList.add("hidden");
-    passwordInput.classList.remove("error");
-    passwordInput.value = "";
-    initializeApp();
-  } else {
-    errorEl.classList.remove("hidden");
-    passwordInput.classList.add("error");
-    passwordInput.value = "";
-    passwordInput.focus();
-    passwordInput.style.animation = "shake 0.4s ease";
-    setTimeout(() => {
-      passwordInput.style.animation = "";
-    }, 500);
-  }
-};
-
-// Add shake keyframes
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
-  }
-`;
-document.head.appendChild(styleSheet);
-
-document.addEventListener("DOMContentLoaded", () => {
-  const passwordInput = document.getElementById("passwordInput");
-  if (passwordInput) {
-    passwordInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleLogin();
-      }
-    });
-  }
-});
-
-// ============================================================
-//  LOGOUT HANDLER
-// ============================================================
-window.handleLogout = function() {
-  if (confirm("Are you sure you want to logout?")) {
-    const mainApp = document.getElementById("mainApp");
-    mainApp.classList.remove("visible");
-    setTimeout(() => {
-      mainApp.classList.add("hidden");
-      document.getElementById("loginPage").style.display = "flex";
-      document.getElementById("passwordInput").value = "";
-      document.getElementById("loginError").classList.add("hidden");
-    }, 300);
-  }
-};
-
-// ============================================================
 //  GLOBALS
 // ============================================================
 let memberChart = null;
 let currentMember = "";
+let celebrationShown = false; // 👈 ADD THIS - Prevents duplicate popups
 
 const members = ["Utsav", "Shivendu", "Alok", "Abhijeet", "Abhishek"];
 
@@ -475,9 +406,9 @@ window.saveGoal = async function() {
   await setDoc(doc(db, "team", "goal"), { title: goal });
   document.getElementById("goalInput").value = "";
   
-  // Reset goal checkoff when new goal is set
   const ref = doc(db, "team", "goalCheckoff");
   await setDoc(ref, {});
+  celebrationShown = false;
   await initializeGoalCheckoff();
   await addActivity("📝 New team goal set: " + goal);
 };
@@ -535,14 +466,16 @@ async function checkGoalCompletion() {
   if (progress === 100) {
     badge.innerText = "✅ Completed!";
     badge.classList.add("completed");
-    const popup = document.getElementById("celebrationPopup");
-    if (popup.classList.contains("hidden")) {
+    
+    if (!celebrationShown) {
+      celebrationShown = true;
       showCelebration();
       await addActivity("🎉 Team goal completed by all members!");
     }
   } else {
     badge.innerText = "⏳ In Progress (" + checkedCount + "/" + totalMembers + ")";
     badge.classList.remove("completed");
+    celebrationShown = false;
   }
   
   loadGoalCheckoffList();
@@ -576,6 +509,16 @@ async function loadGoalCheckoffList() {
     `;
   });
   
+  let allChecked = true;
+  membersList.forEach(name => {
+    if (checkoffData[name] !== true) {
+      allChecked = false;
+    }
+  });
+  if (!allChecked) {
+    celebrationShown = false;
+  }
+  
   await checkGoalCompletion();
 }
 
@@ -587,6 +530,8 @@ window.resetTeamGoal = async function() {
   
   const popup = document.getElementById("celebrationPopup");
   popup.classList.add("hidden");
+  
+  celebrationShown = false;
   
   await loadGoalCheckoffList();
   await addActivity("🔄 Team goal checkoff was reset");
@@ -635,6 +580,7 @@ function createConfetti() {
 }
 
 async function initializeGoalCheckoff() {
+  celebrationShown = false;
   await loadGoalCheckoffList();
 }
 
@@ -786,6 +732,76 @@ async function initializeApp() {
 }
 
 // ============================================================
+//  LOGIN HANDLERS
+// ============================================================
+window.handleLogin = function() {
+  const passwordInput = document.getElementById("passwordInput");
+  const errorEl = document.getElementById("loginError");
+  const password = passwordInput.value.trim();
+
+  if (password === CORRECT_PASSWORD) {
+    document.getElementById("loginPage").style.display = "none";
+    const mainApp = document.getElementById("mainApp");
+    mainApp.classList.remove("hidden");
+    setTimeout(() => {
+      mainApp.classList.add("visible");
+    }, 50);
+    errorEl.classList.add("hidden");
+    passwordInput.classList.remove("error");
+    passwordInput.value = "";
+    initializeApp();
+  } else {
+    errorEl.classList.remove("hidden");
+    passwordInput.classList.add("error");
+    passwordInput.value = "";
+    passwordInput.focus();
+    passwordInput.style.animation = "shake 0.4s ease";
+    setTimeout(() => {
+      passwordInput.style.animation = "";
+    }, 500);
+  }
+};
+
+// Add shake keyframes
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+`;
+document.head.appendChild(styleSheet);
+
+document.addEventListener("DOMContentLoaded", () => {
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleLogin();
+      }
+    });
+  }
+});
+
+// ============================================================
+//  LOGOUT HANDLER
+// ============================================================
+window.handleLogout = function() {
+  if (confirm("Are you sure you want to logout?")) {
+    const mainApp = document.getElementById("mainApp");
+    mainApp.classList.remove("visible");
+    setTimeout(() => {
+      mainApp.classList.add("hidden");
+      document.getElementById("loginPage").style.display = "flex";
+      document.getElementById("passwordInput").value = "";
+      document.getElementById("loginError").classList.add("hidden");
+    }, 300);
+  }
+};
+
+// ============================================================
 //  PREVENT ACCESS WITHOUT LOGIN
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -793,3 +809,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("mainApp").classList.add("hidden");
   document.getElementById("mainApp").classList.remove("visible");
 });
+
+console.log("✅ App loaded successfully!");
+console.log("🔑 Default password: gate2027");
