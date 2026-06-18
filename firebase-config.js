@@ -18,81 +18,11 @@ import {
 const CORRECT_PASSWORD = "gate2027"; // 👈 Change this to your password
 
 // ============================================================
-//  LOGIN HANDLERS
-// ============================================================
-window.handleLogin = function() {
-  const passwordInput = document.getElementById("passwordInput");
-  const errorEl = document.getElementById("loginError");
-  const password = passwordInput.value.trim();
-
-  if (password === CORRECT_PASSWORD) {
-    document.getElementById("loginPage").style.display = "none";
-    const mainApp = document.getElementById("mainApp");
-    mainApp.classList.remove("hidden");
-    setTimeout(() => {
-      mainApp.classList.add("visible");
-    }, 50);
-    errorEl.classList.add("hidden");
-    passwordInput.classList.remove("error");
-    passwordInput.value = "";
-    initializeApp();
-  } else {
-    errorEl.classList.remove("hidden");
-    passwordInput.classList.add("error");
-    passwordInput.value = "";
-    passwordInput.focus();
-    passwordInput.style.animation = "shake 0.4s ease";
-    setTimeout(() => {
-      passwordInput.style.animation = "";
-    }, 500);
-  }
-};
-
-// Add shake keyframes
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
-  }
-`;
-document.head.appendChild(styleSheet);
-
-document.addEventListener("DOMContentLoaded", () => {
-  const passwordInput = document.getElementById("passwordInput");
-  if (passwordInput) {
-    passwordInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleLogin();
-      }
-    });
-  }
-});
-
-// ============================================================
-//  LOGOUT HANDLER
-// ============================================================
-window.handleLogout = function() {
-  if (confirm("Are you sure you want to logout?")) {
-    const mainApp = document.getElementById("mainApp");
-    mainApp.classList.remove("visible");
-    setTimeout(() => {
-      mainApp.classList.add("hidden");
-      document.getElementById("loginPage").style.display = "flex";
-      document.getElementById("passwordInput").value = "";
-      document.getElementById("loginError").classList.add("hidden");
-    }, 300);
-  }
-};
-
-// ============================================================
 //  GLOBALS
 // ============================================================
 let memberChart = null;
 let currentMember = "";
-let celebrationShown = false; // 👈 Prevents duplicate popups
+let celebrationShown = false;
 
 const members = ["Utsav", "Shivendu", "Alok", "Abhijeet", "Abhishek"];
 
@@ -476,7 +406,6 @@ window.saveGoal = async function() {
   await setDoc(doc(db, "team", "goal"), { title: goal });
   document.getElementById("goalInput").value = "";
   
-  // Reset goal checkoff when new goal is set
   const ref = doc(db, "team", "goalCheckoff");
   await setDoc(ref, {});
   celebrationShown = false;
@@ -495,7 +424,7 @@ function loadGoal() {
 }
 
 // ============================================================
-//  TEAM GOAL CHECKOFF (FIXED - No Duplicate Popups)
+//  TEAM GOAL CHECKOFF
 // ============================================================
 window.toggleGoalCheckoff = async function(memberName, checked) {
   const ref = doc(db, "team", "goalCheckoff");
@@ -538,7 +467,6 @@ async function checkGoalCompletion() {
     badge.innerText = "✅ Completed!";
     badge.classList.add("completed");
     
-    // Only show popup if it hasn't been shown yet
     if (!celebrationShown) {
       celebrationShown = true;
       showCelebration();
@@ -547,7 +475,6 @@ async function checkGoalCompletion() {
   } else {
     badge.innerText = "⏳ In Progress (" + checkedCount + "/" + totalMembers + ")";
     badge.classList.remove("completed");
-    // Reset the flag when progress drops below 100%
     celebrationShown = false;
   }
   
@@ -582,7 +509,6 @@ async function loadGoalCheckoffList() {
     `;
   });
   
-  // Reset celebration flag if not all members are checked
   let allChecked = true;
   membersList.forEach(name => {
     if (checkoffData[name] !== true) {
@@ -605,7 +531,6 @@ window.resetTeamGoal = async function() {
   const popup = document.getElementById("celebrationPopup");
   popup.classList.add("hidden");
   
-  // Reset the celebration flag
   celebrationShown = false;
   
   await loadGoalCheckoffList();
@@ -627,7 +552,6 @@ function showCelebration() {
 
 window.closeCelebration = function() {
   document.getElementById("celebrationPopup").classList.add("hidden");
-  // Flag stays true so popup doesn't reappear
 };
 
 function createConfetti() {
@@ -786,7 +710,7 @@ window.toggleTheme = function() {
 };
 
 // ============================================================
-//  INITIALIZE APP
+//  INITIALIZE APP (DEFINED BEFORE BEING CALLED)
 // ============================================================
 async function initializeApp() {
   await createMembers();
@@ -806,6 +730,76 @@ async function initializeApp() {
     document.getElementById("themeLabel").innerText = "Light";
   }
 }
+
+// ============================================================
+//  LOGIN HANDLERS (DEFINED AFTER initializeApp)
+// ============================================================
+window.handleLogin = function() {
+  const passwordInput = document.getElementById("passwordInput");
+  const errorEl = document.getElementById("loginError");
+  const password = passwordInput.value.trim();
+
+  if (password === CORRECT_PASSWORD) {
+    document.getElementById("loginPage").style.display = "none";
+    const mainApp = document.getElementById("mainApp");
+    mainApp.classList.remove("hidden");
+    setTimeout(() => {
+      mainApp.classList.add("visible");
+    }, 50);
+    errorEl.classList.add("hidden");
+    passwordInput.classList.remove("error");
+    passwordInput.value = "";
+    initializeApp();
+  } else {
+    errorEl.classList.remove("hidden");
+    passwordInput.classList.add("error");
+    passwordInput.value = "";
+    passwordInput.focus();
+    passwordInput.style.animation = "shake 0.4s ease";
+    setTimeout(() => {
+      passwordInput.style.animation = "";
+    }, 500);
+  }
+};
+
+// Add shake keyframes
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+`;
+document.head.appendChild(styleSheet);
+
+document.addEventListener("DOMContentLoaded", () => {
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleLogin();
+      }
+    });
+  }
+});
+
+// ============================================================
+//  LOGOUT HANDLER
+// ============================================================
+window.handleLogout = function() {
+  if (confirm("Are you sure you want to logout?")) {
+    const mainApp = document.getElementById("mainApp");
+    mainApp.classList.remove("visible");
+    setTimeout(() => {
+      mainApp.classList.add("hidden");
+      document.getElementById("loginPage").style.display = "flex";
+      document.getElementById("passwordInput").value = "";
+      document.getElementById("loginError").classList.add("hidden");
+    }, 300);
+  }
+};
 
 // ============================================================
 //  PREVENT ACCESS WITHOUT LOGIN
